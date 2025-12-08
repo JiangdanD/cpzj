@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025年翠屏区住建外宣报道统计库</title>
+    <style>
+        :root { --primary: #0056b3; --bg: #f4f6f9; --card-bg: #ffffff; --text: #333; }
+        body { font-family: "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        
+        /* Header */
+        header { text-align: center; margin-bottom: 30px; position: relative; }
+        h1 { color: var(--primary); margin: 0; }
+        .subtitle { color: #666; font-size: 0.9em; margin-top: 5px; }
+        
+        /* Controls */
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn { padding: 8px 16px; border: 1px solid #ddd; background: white; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .btn:hover { background: #eef; border-color: var(--primary); color: var(--primary); }
+        .btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .action-btn { background: #28a745; color: white; border: none; }
+        .action-btn:hover { background: #218838; }
+
+        /* Search */
+        .search-box { width: 100%; max-width: 400px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin: 0 auto 20px auto; display: block; }
+
+        /* Stats */
+        .stats-bar { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9em; }
+
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s; border-left: 4px solid var(--primary); display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .card-meta { font-size: 12px; color: #888; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .card-level { background: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 4px; }
+        .card-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #2c3e50; line-height: 1.4; }
+        .card-summary { font-size: 13px; color: #666; margin-bottom: 15px; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+        .tag { background: #f0f0f0; padding: 2px 8px; border-radius: 10px; font-size: 11px; color: #555; }
+        .card-link { margin-top: auto; text-decoration: none; color: var(--primary); font-size: 13px; font-weight: bold; display: block; text-align: right; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 500px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .modal-footer { text-align: right; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>2025年翠屏区重要报道统计</h1>
+    <div class="subtitle">区住建外宣统计 · 更新至12月</div>
+    <div style="position: absolute; right: 0; top: 0;">
+        <button class="btn action-btn" onclick="openModal()">+ 新增报道</button>
+        <button class="btn" onclick="exportCSV()">⬇ 导出数据</button>
+    </div>
+</header>
+
+<input type="text" id="searchInput" class="search-box" placeholder="搜索标题、内容或媒体..." onkeyup="filterData()">
+
+<div class="controls" id="deptFilters">
+    <button class="btn active" onclick="filterDept('all')">全部</button>
+    </div>
+
+<div class="stats-bar" id="statsBar">共加载 0 条报道</div>
+
+<div class="grid" id="contentGrid">
+    </div>
+
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <h2>新增报道</h2>
+        <form id="addForm">
+            <div class="form-group">
+                <label>标题</label>
+                <input type="text" name="title" required>
+            </div>
+            <div class="form-group">
+                <label>部门 (多个用、分隔)</label>
+                <input type="text" name="dept" placeholder="例如：办公室、区质安站" required>
+            </div>
+            <div class="form-group">
+                <label>媒体名称</label>
+                <input type="text" name="media" required>
+            </div>
+            <div class="form-group">
+                <label>级别</label>
+                <select name="level">
+                    <option value="区级">区级</option>
+                    <option value="市级">市级</option>
+                    <option value="省级">省级</option>
+                    <option value="中央级">中央级</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>日期</label>
+                <input type="text" name="date" placeholder="例如：12月5日">
+            </div>
+            <div class="form-group">
+                <label>链接</label>
+                <input type="text" name="link">
+            </div>
+            <div class="form-group">
+                <label>主要内容摘要</label>
+                <textarea name="content" rows="3"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" onclick="closeModal()">取消</button>
+                <button type="button" class="btn action-btn" onclick="addEntry()">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // 原始CSV数据 (已内置)
+    const rawCsvData = `序号,平台级别,媒体名称,主题,标题,链接,时长/篇幅,主要内容,日期,单条/综合,股室/单位
+1,区级,三江翠屏APP,,区供排水服务中心学习贯彻区委六届七次全会精神,http://cuiping.wengegroup.com:9080/a/202501/02/WS6775f1d0e4b00b4bca74e92e.html,短篇,近期，区供排水服务中心召开中心第十二次党政联席会议，学习贯彻区委六届七次全会精神。,1月2日,综合,区供排水服务中心
+2,区级,三江翠屏APP,,区供排水服务中心学习贯彻市委六届九次全会精神,http://cuiping.wengegroup.com:9080/a/202501/02/WS6775f1f2e4b00b4bca74e92f.html,短篇,近期，区供排水服务中心召开中心第十一次党政联席会议，学习贯彻市委六届九次全会精神。,1月2日,综合,区供排水服务中心
+3,区级,三江翠屏APP,,规范直管公房管理、整顿租赁乱象,http://cuiping.wengegroup.com:9080/a/202501/13/WS67849749e4b00b4bca74f61a.html,短篇,翠屏区公房服务中心为加强直管公房管理，对所管辖区直管公房进行清理。,1月13日,综合,区公房服务中心
+4,区级,三江翠屏APP,,区公房服务中心加强安全检查、营造安居祥和氛围,http://cuiping.wengegroup.com:9080/a/202501/13/WS6784975be4b00b4bca74f61b.html,中篇,翠屏区公房服务中心全力投入到辖区直管公房的安全检查工作当中。,1月13日,综合,区公房服务中心
+5,区级,三江翠屏APP,,历史文化街区、腾退老屋迎新生,http://cuiping.wengegroup.com:9080/a/202501/13/WS67849793e4b00b4bca74f61f.html,短篇,针对大观楼区域历史文化街区拟腾退搬离145户。,1月13日,综合,区公房服务中心
+6,区级,三江翠屏APP,,区质安站专题学习《房屋市政工程生产安全重大事故隐患判定标准（2024版）》,http://cuiping.wengegroup.com:9080/a/202501/13/WS67849780e4b00b4bca74f61e.html,短篇,近期区质安站组织全体人员专题学习《房屋市政工程生产安全重大事故隐患判定标准（2024版）》。,1月13日,综合,区质安站
+7,区级,三江翠屏APP,,区公房服务中心：推动直管公房搬迁，助力城市更新,http://cuiping.wengegroup.com:9080/a/202501/14/WS6786288be4b00b4bca74f83f.html,中篇,近日，区公房服务中心迅速组建直管公房搬迁工作小组，深入各个社区。,1月14日,综合,区公房服务中心
+8,区级,三江翠屏APP,,遵守《安全生产法》当好第一责任人 ——区公房服务中心开展消防培训暨演练活动,http://cuiping.wengegroup.com:9080/a/202501/14/WS678628d3e4b00b4bca74f84c.html,中篇,近期，区公房服务中心组织开展消防知识、逃生自救、应急疏散的知识培训及现场演练。,1月14日,综合,区公房服务中心
+9,区级,三江翠屏APP,,为民办实事 热心解民忧,http://cuiping.wengegroup.com:9080/a/202501/14/WS678628c1e4b00b4bca74f848.html,中篇,宜宾市翠屏区公房服务中心稳步有序推进位于水池街43号的直管公房化粪池维修疏通及加高工程。,1月14日,综合,区公房服务中心
+10,区级,三江翠屏APP,,加强公房管理 保障住户安全底线,http://cuiping.wengegroup.com:9080/a/202501/14/WS678628b0e4b00b4bca74f846.html,中篇,公房中心领导班子带队对房屋开展了全面系统的安全巡查工作。,1月14日,综合,区公房服务中心
+11,区级,三江翠屏APP,,推动直管公房产权办理 赋予老旧房屋新身份,http://cuiping.wengegroup.com:9080/a/202501/14/WS6786289fe4b00b4bca74f843.html,中篇,翠屏区公房服务中心全面开展直管公房产权办理工作。,1月14日,综合,区公房服务中心
+12,区级,三江翠屏APP,,区公房服务中心集中开展保障性住房摸排清理工作,http://cuiping.wengegroup.com:9080/a/202501/17/WS6789c1cae4b00b4bca74fc70.html,中篇,翠屏区公房服务中心对管理范围内保障性住房开展摸排清理工作。,1月17日,综合,区公房服务中心
+13,中央级,中国网,,宜宾翠屏：推动直管公房产权办理 赋予老旧房屋新身份,http://szjj.china.com.cn/2025-01/15/content_43011546.html,中篇,翠屏区公房服务中心全面开展直管公房产权办理工作。,1月15日,综合,区公房服务中心
+14,中央级,中国网,,宜宾市翠屏区质安站：扎实治理欠薪 助民工安“薪”过年,http://szjj.china.com.cn/2025-01/14/content_43010734.html,中篇,翠屏区质安站扎实开展全区在建房屋市政工程项目治理农民工欠薪工作。,1月14日,综合,区质安站
+15,区级,三江翠屏APP,,节前管护加力度 清淤疏堵迎新春,http://cuiping.wengegroup.com:9080/a/202501/31/WS679c657be4b00b4bca750fd0.html,中篇,区供排水服务中心本着“早准备、早部署、早落实”的工作方针，全力做好春节前后排水设施保障工作。,1月31日,综合,区供排水服务中心
+16,区级,三江翠屏APP,,区住房城乡建设局开展定点帮扶新年慰问活动,http://cuiping.wengegroup.com:9080/a/202501/31/WS679c6921e4b00b4bca750fd3.html,短篇,局机关及下属事业单位89名帮扶干部对帮扶的162户困难群众进行了入户走访慰问。,1月31日,综合,村镇股
+17,中央级,中国网,,宜宾市翠屏区住房和城乡建设局顺利召开2024年度工作会,http://szjj.china.com.cn/2025-01/27/content_43022278.html,中篇,翠屏区住房城乡建设局召开2024年度工作总结会议。,1月27日,综合,办公室
+18,区级,三江翠屏APP,,翠屏区住房和城乡建设局召开2024年度工作会,http://cuiping.wengegroup.com:9080/a/202501/27/WS679740cbe4b00b4bca750c52.html,中篇,翠屏区住房城乡建设局召开2024年度工作总结会议。,1月27日,综合,办公室
+19,区级,三江翠屏APP,,翠屏区质安站开展建筑工地节后复工复产安全检查,http://cuiping.wengegroup.com:9080/a/202502/10/WS67a9a6dbe4b00b4bca7518fa.html,中篇,区质安站分管安全的副站长带队，深入到翠屏区白花镇开展建筑工地节后安全检查。,2月10日,综合,区质安站
+20,区级,三江翠屏APP,,开年即开干，扬帆再起航——翠屏区住建系统召开2025年度工作思路谋划会议,http://m.cuipingrongmei.cn/cms/content/11848632,中篇,翠屏区住房和城乡建设局召开2025年度工作规划会议。,2月19日,综合,办公室
+21,中央级,中国网,,开年即开干，扬帆再起航——翠屏区住建系统召开2025年度工作思路谋划会议,http://szjj.china.com.cn/2025-02/19/content_43031684.html,中篇,翠屏区住房和城乡建设局召开2025年度工作规划会议。,2月19日,综合,办公室
+22,市级,宜人宜宾APP,,加快城市更新 优化住房供需结构 翠屏区住建系统部署全年重点工作,https://www.founderfx.cn/elecPublish/digitalArticleMobile?id=229148,中篇,翠屏区住房和城乡建设局召开2025年度工作规划会议。,2月19日,综合,办公室
+23,区级,三江翠屏微信公众号,,翠屏时政简讯,https://mp.weixin.qq.com/s/KfShIGoKcae3XZP-Uggtlg,,翠屏时政简讯,2月21日,,办公室
+24,区级,三江翠屏APP,,区质安站聘请专家进厂房培训临时用电知识,http://m.cuipingrongmei.cn/cms/content/11890286,,翠屏区质安站聘请专家到117厂房项目现场培训建筑工地临时用电知识。,2月24日,,区质安站
+25,市级,宜人宜宾APP,,民生实践 “宜”起幸福|宜居和美 老旧小区实现“逆龄”蜕变,视频号无链接,,民生实践 “宜”起幸福|宜居和美 老旧小区实现“逆龄”蜕变。,2月25日,,发策股
+26,区级,三江翠屏APP,,冲刺奋进 百舸争先丨老旧小区“逆龄”蜕变！居民幸福感“旧地升温”,https://mp.weixin.qq.com/s/uJWJLJQVQ2OqZlldUb_fgQ,,溢香苑小区的“逆龄”蜕变，只是翠屏区老旧小区改造的一个缩影。,2月27日,,发策股
+27,中央级,中国网,,宜宾翠屏区：专题培训助力建筑业产值“开门红”,http://sc.china.com.cn/2025-03/03/content_43040351.html,,翠屏区住房和城乡建设局组织召开建筑业产值提升专题培训会。,3月3日,,建管股
+28,区级,三江翠屏APP,,翠屏区住房和城乡建设局召开全国两会期间安全生产专项工作部署会,http://m.cuipingrongmei.cn/cms/content/12077755,,翠屏区住房和城乡建设局组织召开全国两会期间房屋市政工程施工领域安全隐患集中排查治理工作专题部署会。,3月10日,,区质安站
+29,区级,三江翠屏APP,,翠屏区住房和城乡建设系统召开“清风扬帆”廉洁警示教育大会,http://m.cuipingrongmei.cn/cms/content/12115717,,翠屏区住房和城乡建设局组织召开全系统“清风扬帆”廉洁警示教育大会。,3月11日,,办公室
+30,中央级,中国网,,破局·革新·护航|宜宾市翠屏区创新构建服务型住建消防审验新模式,http://sc.china.com.cn/2025-03/12/content_43050172.html,,宜宾市翠屏区住房和城乡建设局锐意改革，创新打造“三维立体化”服务监管体系。,3月12日,,消验中心
+31,区级,三江翠屏APP,,翠屏区住房和城乡建设局机关党委开展“微网实格”柔性治理“学雷锋” 志愿服务活动,http://m.cuipingrongmei.cn/cms/content/12128801,,翠屏区住房和城乡建设局机关党委联合大观楼仁和社区党委开展志愿服务活动。,3月12日,,办公室
+32,区级,三江翠屏APP,,区住建局组织早期人防工程改造现场踏勘会,http://m.cuipingrongmei.cn/cms/content/12159181,,宜宾市早期人防工程改造项目现场踏勘会在翠屏区大观楼街道清华街人防工事项目现场召开。,3月14日,,勘设股
+33,中央级,中国网,,宜宾市翠屏区住房保障和房地产事务中心党支部开展主题党日活动,http://sc.china.com.cn/2025-03/18/content_43056116.html,,宜宾市翠屏区住房保障和房地产事务中心组织开展“缅怀革命先烈，传承革命精神”主题党日活动。,3月18日,,住房中心
+34,省级,四川建设发布,,百强镇巡礼 | 李庄底气何来→,https://mp.weixin.qq.com/s/xx,,“四川建设发布”微信公众号将推出“百强镇巡礼”专题栏目。,3月26日,,村镇股
+35,区级,三江翠屏APP,,区住房城乡建设局团总支开展“阳光青年 廉洁住建”主题团日活动,http://m.cuipingrongmei.cn/cms/content/12370748,,翠屏区住房城乡建设局团总支组织全系统团员及青年干部在人民公园广场开展主题团日活动。,3月28日,,村镇股
+36,中央级,中国网,,宜宾市翠屏区住房城乡建设局团总支 开展“阳光青年廉洁住建”主题团日活动,http://sc.china.com.cn/2025-03/28/content_43067779.html,,同上。,3月28日,,村镇股
+37,区级,三江翠屏APP,,翠屏区质安站党支部赴李庄文化抗战博物馆开展“以史为鉴 以廉为本” 主题党日活动,http://m.cuipingrongmei.cn/cms/content/12313456,,翠屏区质安站党支部组织全体党员、入党积极分子赴李庄开展“以史为鉴，以廉为本”主题党日活动。,3月25日,,区质安站
+38,区级,三江翠屏APP,,区公房服务中心联合消防部门开展沉浸式消防演练,http://m.cuipingrongmei.cn/cms/content/12367250,,近期公房服务中心携手东楼街社区，在公房服务中心成功举办了一场消防演练活动。,3月28日,,区公房服务中心
+39,省级,影响四川,,南充市国动办调研组到宜宾调研早期人防升级改造工程建设工作,http://www.yxsctv.com/index.php,,南充市国防动员办公室调研组一行来宜考察交流。,3月31日,,勘设股
+40,省级,影响四川,,住建展风采 奋进新翠屏 ——宜宾翠屏区住建系统春季趣味运动会超“燃”,http://www.yxsctv.com/index.php,,2025年宜宾市翠屏区住建系统春季趣味运动会火热开幕。,4月3日,,办公室
+41,市级,宜人宜宾APP,,群众身边事 我的获得感 | 电梯成了“拦路障” 住宅老旧电梯更新让居民出行顺畅,https://m.yibinrm.cn/cms/content/83066344,,经过宜宾市住宅老旧电梯更新政策，大楼的电梯更换一新。,4月16日,,住房股
+42,市级,宜人宜宾APP视频号,,老旧电梯“焕新”居民出行“迎新”,视频号无连接,,我市实施住宅老旧电梯更新，解决老旧小区电梯出行难题。,4月16日,,住房股
+43,区级,三江翠屏APP,,区供排水服务中心工会圆满完成换届选举,http://cuiping.wengegroup.com:9080/a/202504/28/WS680f2814e4b00b4bca757415.html,,区供排水服务中心工会换届选举大会顺利召开。,4月28日,,区供排水服务中心
+44,中央级,中国网,,宜宾市翠屏区起步广场建成启用：以匠心监管托举民生幸福新空间,http://sc.china.com.cn/2025-04/28/content_43097665.html,,宜宾翠屏区再添民生工程新成果——起步广场，4月24日正式竣工投用。,4月28日,,办公室、区质安站
+45,区级,翠屏区人民政府网站,,筑牢安全防线 护航节日市场,http://www.cuiping.gov.cn/zwhd/bmdt/202504/t20250430_2115893.html,,翠屏区住房中心对全区房地产开发项目营销中心的安全生产及规范销售开展全面排查。,4月30日,,住房中心
+46,区级,三江翠屏APP,,深入贯彻中央八项规定精神 筑牢作风建设思想防线,http://cuiping.wengegroup.com:9080/a/202505/01/WS68131f3ae4b00b4bca757846.html,,翠屏区质安站党支部组织全体党员和年轻干部赴翠屏山赵一曼纪念馆开展学习教育主题党日活动。,5月1日,,区质安站
+47,区级,三江翠屏APP,,以“演”筑防、以“练”备战 ——区供排水服务中心开展防汛应急抢险演练,http://cuiping.wengegroup.com:9080/a/202505/01/WS68131f64e4b00b4bca757847.html,,翠屏区供排水服务中心组织全体抢险人员开展了2025年度防汛应急抢险演练。,5月1日,,区供排水服务中心
+48,区级,三江翠屏APP,,以练为战，筑牢安全防线 ——区供排水服务中心开展井下有限空间作业演练,http://cuiping.wengegroup.com:9080/a/202505/01/WS68131f84e4b00b4bca757848.html,,翠屏区供排水服务中心组织开展了井下有限空间作业演练。,5月1日,,区供排水服务中心
+49,区级,三江翠屏APP,,强化节前安全检查 筑牢物业安全防线,http://cuiping.wengegroup.com:9080/a/202505/01/WS68133dc8e4b00b4bca75786a.html,,区住房中心深入物业小区开展“五一”节前物业小区安全生产检查。,5月1日,,住房中心
+50,区级,三江翠屏APP,,宜宾市翠屏区住房保障和房地产事务中心开展房地产经纪机构违规提供经纪服务专项检查,http://cuiping.wengegroup.com:9080/a/202505/07/WS681aff63e4b00b4bca757bef.html,,重点针对房地产经纪机构是否存在“违规为保障性住房出租、出售提供经纪服务”的情况进行检查。,5月7日,,住房中心
+51,市级,宜人宜宾APP,,群众身边事 我的获得感 | 筑牢安居基石 农村危房改造暖民心,https://m.yibinrm.cn/cms/content/84269514,,2021—2024年全市实施完成农村危房改造2973户。,5月7日,,村镇股
+52,区级,三江翠屏APP,,区供排水服务中心集中观看有限空间作业 警示教育片,http://cuiping.wengegroup.com:9080/a/temp,,区供排水服务中心组织全体人员集中观看有限空间作业警示教育片。,5月9日,,区供排水服务中心
+53,区级,三江翠屏APP,,排险除患保安全 修缮外墙暖民心 ——区公房服务中心开展直管公房外墙排险维修工作,http://cuiping.wengegroup.com:9080/a/temp,,宜宾市翠屏区公房服务中心开展外墙排险维修工作。,5月12日,,区公房服务中心
+54,区级,三江翠屏APP,,区供排水服务中心开展“党建带工建”主题党日活动,http://cuiping.wengegroup.com:9080/a/temp,,区供排水服务中心党支部联合中心工会开展“党建带工建”主题党日活动。,5月12日,,区供排水服务中心
+55,区级,三江翠屏APP,,排险除患保安全 维修加固暖民心,http://cuiping.wengegroup.com:9080/a/temp,,宜宾市翠屏区公房服务中心迅速组织力量开展排险维修工作。,5月12日,,区公房服务中心
+56,市级,宜人宜宾APP视频号,,群众身边事 我的获得感 | 筑牢安居基石 农村危房改造暖民心,视频号无连接,,同上。,5月13日,,村镇股
+57,中央级,人民网,,宜宾翠屏：从旧墙到风景线 让老城既有 “颜值” 更有 “温度”,http://sc.people.com.cn/n2/2025/0513/c407319-41226107.html,,宜宾市翠屏区通过 “改功能、改景观、改生活”的“六改一同步”模式。,5月13日,,发策股
+58,市级,宜人宜宾APP,,宜美家园 共同创造丨翠屏区：老旧小区上演“变形记” 秒变网红生活圈,https://m.yibinrm.cn/cms/content/84643433,,翠屏区大观楼街道民愿巷原本单调的墙面变身“艺术长廊”。,5月13日,,发策股
+59,区级,三江翠屏APP,,在翠屏！花墙遇上美学墙绘,视频号无连接,,花墙遇上美学墙绘。,5月13日,,发策股
+60,区级,三江翠屏APP,,解民忧 树新风 ——区纪委监委调研组到华彩城小区开展专项调研工作,http://cuiping.wengegroup.com:9080/a/temp,,区纪委监委调研组到华彩城小区进行专项调研。,5月19日,,住房中心
+61,区级,三江翠屏APP,,冲刺奋进 百舸争先丨老小区“逆龄”蜕变 居民幸福“旧”地加码,https://mp.weixin.qq.com/s,,全区332个老旧小区已完工239个，惠及居民约5.29万户。,6月3日,,发策股
+62,区级,三江翠屏APP,,区住房和城乡建设局组织开展宜宾市早期人防工程升级改造项目安全巡查工作,http://cuiping.wengegroup.com:9080/a/temp,,对项目实施区域进行了全面安全巡查。,6月5日,,勘设股
+63,区级,三江翠屏APP,,四川省传统村落保护条例,http://cuiping.wengegroup.com:9080/a/temp,,四川省传统村落保护条例。,6月11日,,村镇股
+64,区级,三江翠屏APP,,彩绘上墙 老旧小区很有“艺术范儿”,https://mp.weixin.qq.com/s/7I8bQ3aCRLxcXBlN2KgNog,,翠屏区安阜街道的学府花园小区，一幅幅色彩斑斓的墙面彩绘映入眼帘。,6月11日,,发策股
+65,区级,三江翠屏APP,,川云中路改造收官 内环线形象焕新亮相,http://cuiping.wengegroup.com:9080/a/temp,,川云中路老旧小区改造项目加速推进。,6月12日,,发策股、区质安站
+66,中央级,中国网,,宜宾川云中路改造收官 内环线形象焕新亮相,http://sc.china.com.cn/2025-06/12/content_43143422.html,,同上。,6月12日,,发策股、区质安站
+67,区级,三江翠屏APP,,安全责任培训 强化风险防范,http://m.cuipingrongmei.cn/cms/content/13750885,,安全责任培训。,7月2日,,住房中心
+68,区级,三江翠屏APP,,翠屏区住建系统召开公用事业板块安全生产工作会议,http://m.cuipingrongmei.cn/cms/content/13750494,,公用事业板块安全生产工作会议。,7月2日,,公用股
+69,区级,三江翠屏APP,,翠屏区住建局指导工地开展安全生产月活动,http://m.cuipingrongmei.cn/cms/content/13750452,,指导工地开展安全生产月活动。,7月2日,,区质安站
+70,区级,三江翠屏APP,,区供排水服务中心开展排水许可宣传活动,http://m.cuipingrongmei.cn/cms/content/13751032,,排水许可宣传活动。,7月2日,,区供排水服务中心
+71,区级,三江翠屏微信公众号,,冲刺奋进 百舸争先丨住宅老旧电梯更新 让安心“一键直达”,https://mp.weixin.qq.com/s/XBK1Jo84afca9F13WeAwBA,,住宅老旧电梯更新。,7月7日,,住房股
+72,区级,三江翠屏APP,,翠屏区住建局组织《四川省房屋建筑工程消防设计技术审查要点（2025年版）》线上培训,http://m.cuipingrongmei.cn/cms/content/14000089,,线上培训。,7月21日,,消验中心
+73,区级,三江翠屏APP,,督查污水处理厂，守护碧水润民生,http://m.cuipingrongmei.cn/cms/content/14067755,,区供排水服务中心对污水处理厂开展全覆盖检查。,7月24日,,区供排水服务中心
+74,区级,三江翠屏APP,,宜宾市城镇绿化条例,http://m.cuipingrongmei.cn/cms/content/14067792,,宜宾市城镇绿化条例。,7月24日,,办公室
+75,区级,三江翠屏APP,,宜宾市机动车停车条例,http://m.cuipingrongmei.cn/cms/content/14082722,,宜宾市机动车停车条例。,7月24日,,办公室
+76,区级,三江翠屏微信公众号,,“忧居” 变 “优居” ！农村危房改造托起百姓“稳稳的幸福”,https://mp.weixin.qq.com/s/dt3wReJ1ZXJxb9UCS9RpSw,,农村危房改造。,8月6日,,村镇股
+77,中央级,中央广电总台国际在线,,宜宾翠屏：“忧居”变“优居” 农村危房改造托起百姓“稳稳的幸福”,https://sc.cri.cn/2025-08-07/47057a6b,,同上。,8月7日,,村镇股
+78,区级,三江翠屏微信公众号,,约220个车位！宜宾新增一处停车场 位置在……,https://mp.weixin.qq.com/s/N366-wdz4V4homozrv4UYA,,新增停车场。,8月13日,,发策股
+79,省级,影响四川,,禁噪宣传进小区，宁静生活共营造,http://www.yxsctv.com/index.php,,宜宾市翠屏区住房和城乡建设局开展噪音污染防治宣传活动。,8月15日,,住房中心
+80,区级,三江翠屏APP,,禁噪宣传进小区，宁静生活共营造,http://m.cuipingrongmei.cn/cms/content/14437840,,同上。,8月18日,,住房中心
+81,省级,影响四川,,宜宾市翠屏区城市建设项目研究中心深入开展“连心共赴现代化”联系服务群众工作,http://www.yxsctv.com/index.php,,联系服务群众工作。,9月1日,,项目中心
+82,区级,三江翠屏APP,,区项目研究中心深入开展“连心共赴现代化” 联系服务群众工作,http://m.cuipingrongmei.cn/cms/content/14705378,,同上。,9月1日,,项目中心
+83,区级,三江翠屏APP,,区公房服务中心成功举办消防培训与应急演练,http://m.cuipingrongmei.cn/cms/content/14860540,,消防培训与应急演练。,9月9日,,区公房服务中心
+84,中央级,中国网,,党建引领强技能 匠心筑梦促振兴,http://sc.china.com.cn/2025-09/26/content_43238919.html,,宜宾市翠屏区率先启动乡村建设带头工匠培训工作。,9月26日,,村镇股
+85,区级,三江翠屏APP,,党建引领强技能 匠心筑梦促振兴,http://m.cuipingrongmei.cn/cms/content/15180842,,同上。,9月26日,,村镇股
+86,市级,宜人宜宾APP,,第二十四届中国民族建筑研究会学术年会在李庄古镇举行,https://m.yibinrm.cn/cms/content/96651131,,年会举行。,10月27日,,村镇股
+87,区级,三江翠屏公众号,,三大片区擘画城市新图景 翠屏发展再迎新机遇,https://mp.weixin.qq.com/s/333OTMhShSUPzEsDTRwUSA,,三大片区擘画城市新图景。,10月13日,,住房中心
+89,区级,三江翠屏公众号,,翠屏区举行 2025 年城市价值推介暨机会清单发布会,https://mp.weixin.qq.com/s/P3RXEWn3JgGau6Y9VzgGzw,,城市价值推介。,10月13日,,住房中心
+90,省级,四川新闻网,,宜宾市翠屏区 2025 年城市价值推介暨机会清单发布会举行,https://scnews.newssc.org/system/20251014/001562170.html,,同上。,10月14日,,住房中心
+91,省级,川观新闻,,宜宾翠屏释放一批城市机会清单，涉及三大片区,https://cbgc.scol.com.cn/news/6842847,,城市机会清单。,10月13日,,住房中心
+92,市级,宜人宜宾APP,,翠屏区：擘画城市新图景 三大片区协同发展释放新动能,https://m.yibinrm.cn/cms/content/95727830,,同上。,10月14日,,住房中心
+93,区级,翠屏住建公众号,,翠屏区质安站党支部开展 “弘扬伟大抗战精神，奋进民族复兴新征程” 主题党日活动,http://m.cuipingrongmei.cn/cms/content/15432294,,党日活动。,10月15日,,区质安站
+94,省级,红星新闻,,曾因 “天池晚照” 闻名遐迩！四川宜宾天池片区升级改造即将正式展开,https://static.cdsb.com/micropub/Articles/202510/faf23377ad02ce1f2820a3816cec3072.html,,天池片区升级改造。,10月14日,,住房中心
+95,中央级,中央广电总台国际在线,,宜宾市翠屏区 2025 年城市价值推介会举行,https://sc.cri.cn/n/20251014/da6de176-12bb-2d61-e1f7-3c21ae44114f.html,,推介会。,10月14日,,住房中心
+96,区级,三江翠屏,,翠屏住建：以全会精神为帆 扬高质量发展之舟,https://m.cuipingrongmei.cn/cms/content/16065018,,宣讲会。,12月2日,,办公室
+97,区级,三江翠屏,,凝聚奋进力量 筑牢安全屏障 —— 翠屏区供排水服务中心专题学习党的二十届四中全会精神,https://m.cuipingrongmei.cn/cms/content/15950316,,学习全会精神。,11月19日,,区供排水服务中心
+98,区级,三江翠屏,,互学互鉴启新程 携手并进谱新篇,https://m.cuipingrongmei.cn/cms/content/15825779,,雷波县住建局到翠屏区住房城乡建设局交流学习。,11月11日,,村镇股
+99,区级,三江翠屏,,区住房城乡建设局深入狮子村调研指导,https://m.cuipingrongmei.cn/cms/content/15686734,,调研指导。,11月5日,,村镇股
+100,区级,三江翠屏,,四川省 2025 年房屋市政工程施工安全管理人员培训班在宜宾华邑酒店举行,https://m.cuipingrongmei.cn/cms/content/16192376,,安全管理人员培训班。,12月5日,,区质安站
+101,省级,中国网四川频道,,翠屏住建：以全会精神为帆 扬高质量发展之舟,http://sc.china.com.cn/2025-12/01/content_43290608.html,,同上。,12月1日,,办公室
+102,市级,遇见宜宾微信公众号,,中心城区 355 公里！宜宾已建成绿道 540 公里！,https://mp.weixin.qq.com/s/UClyvYKs0IcfU3kwcoYurw,,绿道建设。,9月7日,,村镇股
+103,区级,三江翠屏微信公众号,,老旧小区焕新 火车公园即将上线......,https://mp.weixin.qq.com/s/plIHb0xt8YD7ywZ1q26jag,,老旧小区改造。,12月4日,,发策股`;
+
+    let allData = [];
+    let deptCounts = {};
+
+    // 解析CSV
+    function parseCSV(csv) {
+        const lines = csv.trim().split('\n');
+        const headers = lines[0].split(',');
+        const result = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+            // 简单处理CSV，注意：这里假设没有包含逗号的字段，实际使用可能需要更复杂的解析
+            // 针对提供的数据，主要字段没有英文逗号，可以用逗号分割
+            let rowStr = lines[i];
+            // 修复可能存在的空行
+            if(!rowStr) continue;
+
+            // 正则处理带引号的CSV字段（防止标题里有逗号被误切）
+            const row = [];
+            let inQuote = false;
+            let temp = '';
+            for(let char of rowStr) {
+                if(char === '"') { inQuote = !inQuote; continue; }
+                if(char === ',' && !inQuote) { row.push(temp); temp = ''; }
+                else { temp += char; }
+            }
+            row.push(temp);
+
+            if (row.length < 5) continue; // 忽略无效行
+
+            // 映射字段 (根据CSV结构: 序号,平台,媒体,主题,标题,链接,时长,内容,日期,综合,股室)
+            // 索引: 0=id, 1=level, 2=media, 3=theme, 4=title, 5=link, 6=len, 7=content, 8=date, 9=type, 10=dept
+            const deptRaw = row[10] || "其他";
+            const depts = deptRaw.split(/、|，|,|\s+/).filter(d => d && d.trim() !== ''); // 按顿号、逗号或空格分割部门
+
+            const entry = {
+                id: row[0],
+                level: row[1],
+                media: row[2],
+                title: row[4],
+                link: row[5],
+                content: row[7],
+                date: row[8],
+                depts: depts
+            };
+            result.push(entry);
+        }
+        return result;
+    }
+
+    // 初始化
+    function init() {
+        allData = parseCSV(rawCsvData);
+        generateDepts();
+        renderGrid(allData);
+        updateStats(allData.length);
+    }
+
+    // 生成部门过滤器
+    function generateDepts() {
+        const depts = new Set();
+        allData.forEach(item => {
+            item.depts.forEach(d => depts.add(d.trim()));
+        });
+        
+        const container = document.getElementById('deptFilters');
+        Array.from(depts).sort().forEach(dept => {
+            if(dept.length < 2) return; // 过滤异常短的
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.innerText = dept;
+            btn.onclick = () => filterDept(dept, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    // 渲染卡片
+    function renderGrid(data) {
+        const grid = document.getElementById('contentGrid');
+        grid.innerHTML = '';
+        
+        data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 生成部门标签HTML
+            const tagsHtml = item.depts.map(d => `<span class="tag">${d}</span>`).join('');
+            
+            card.innerHTML = `
+                <div class="card-meta">
+                    <span class="card-level">${item.level || '未分类'}</span>
+                    <span>${item.date || ''}</span>
+                </div>
+                <div class="card-title">${item.title}</div>
+                <div class="card-tags">${tagsHtml}</div>
+                <div class="card-meta" style="margin-bottom:8px;">${item.media}</div>
+                <div class="card-summary">${item.content || '暂无摘要'}</div>
+                <a href="${item.link}" target="_blank" class="card-link">查看原文 →</a>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    // 筛选部门
+    function filterDept(dept, btnElement) {
+        // 样式切换
+        document.querySelectorAll('.controls .btn').forEach(b => b.classList.remove('active'));
+        if(btnElement) {
+            btnElement.classList.add('active');
+        } else {
+            document.querySelector('.controls .btn').classList.add('active'); // "全部"按钮
+        }
+
+        // 数据筛选
+        if (dept === 'all') {
+            renderGrid(allData);
+            updateStats(allData.length);
+        } else {
+            const filtered = allData.filter(item => item.depts.includes(dept));
+            renderGrid(filtered);
+            updateStats(filtered.length);
+        }
+    }
+
+    // 搜索功能
+    function filterData() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const activeDeptBtn = document.querySelector('.controls .btn.active');
+        const activeDept = activeDeptBtn ? activeDeptBtn.innerText : '全部';
+
+        let baseData = allData;
+        if (activeDept !== '全部') {
+            baseData = allData.filter(item => item.depts.includes(activeDept));
+        }
+
+        const filtered = baseData.filter(item => 
+            (item.title && item.title.toLowerCase().includes(query)) ||
+            (item.content && item.content.toLowerCase().includes(query)) ||
+            (item.media && item.media.toLowerCase().includes(query))
+        );
+        renderGrid(filtered);
+        updateStats(filtered.length);
+    }
+
+    function updateStats(count) {
+        document.getElementById('statsBar').innerText = `共找到 ${count} 条相关报道`;
+    }
+
+    // 模态框逻辑
+    function openModal() { document.getElementById('addModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('addModal').style.display = 'none'; }
+
+    // 新增数据
+    function addEntry() {
+        const form = document.getElementById('addForm');
+        const formData = new FormData(form);
+        
+        const deptsStr = formData.get('dept');
+        const depts = deptsStr.split(/、|，|,|\s+/).filter(d => d.trim());
+
+        const newEntry = {
+            id: allData.length + 1,
+            title: formData.get('title'),
+            level: formData.get('level'),
+            media: formData.get('media'),
+            date: formData.get('date'),
+            link: formData.get('link'),
+            content: formData.get('content'),
+            depts: depts
+        };
+
+        allData.unshift(newEntry); // 加到最前面
+        
+        // 刷新界面
+        renderGrid(allData);
+        updateStats(allData.length);
+        closeModal();
+        form.reset();
+        
+        alert("添加成功！请注意：刷新网页后新增数据会消失，请及时点击右上角‘导出数据’保存CSV文件。");
+    }
+
+    // 导出CSV
+    function exportCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for Excel
+        csvContent += "序号,平台级别,媒体名称,主题,标题,链接,时长/篇幅,主要内容,日期,单条/综合,股室/单位\n";
+
+        allData.forEach(row => {
+            const depts = row.depts.join('、');
+            // 处理含逗号的字段，用引号包起来
+            const safe = (txt) => `"${(txt || '').toString().replace(/"/g, '""')}"`;
+            
+            const line = [
+                row.id,
+                safe(row.level),
+                safe(row.media),
+                "", // Theme留空
+                safe(row.title),
+                safe(row.link),
+                "短篇", // 默认
+                safe(row.content),
+                safe(row.date),
+                "综合",
+                safe(depts)
+            ].join(",");
+            csvContent += line + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "最新_翠屏区住建外宣统计.csv");
+        document.body.appendChild(link);
+        link.click();
+    }
+
+    // 启动
+    window.onload = init;
+</script>
+
+</body>
+</html>
