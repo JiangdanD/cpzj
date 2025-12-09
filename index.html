@@ -3,121 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2025年翠屏区住建外宣报道统计库</title>
+    <title>2025年翠屏区住建外宣数据看板</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #0056b3; --bg: #f4f6f9; --card-bg: #ffffff; --text: #333; }
-        body { font-family: "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            
+            /* 级别颜色定义 */
+            --color-central: #e74c3c; /* 中央级-红 */
+            --color-provincial: #f39c12; /* 省级-橙 */
+            --color-municipal: #3498db; /* 市级-蓝 */
+            --color-district: #27ae60; /* 区级-绿 */
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: #333; margin: 0; padding-bottom: 50px; }
         
-        /* Header */
-        header { text-align: center; margin-bottom: 30px; position: relative; }
-        h1 { color: var(--primary); margin: 0; }
-        .subtitle { color: #666; font-size: 0.9em; margin-top: 5px; }
+        /* 顶部导航 */
+        header { 
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            color: white; 
+            padding: 20px 40px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header-title h1 { margin: 0; font-size: 24px; font-weight: 600; }
+        .header-title p { margin: 5px 0 0; opacity: 0.8; font-size: 14px; }
+        .header-actions .btn { 
+            background: rgba(255,255,255,0.2); 
+            border: 1px solid rgba(255,255,255,0.4); 
+            color: white; 
+            margin-left: 10px;
+        }
+        .header-actions .btn:hover { background: rgba(255,255,255,0.3); }
+
+        /* 搜索框 */
+        .search-container {
+            max-width: 1200px;
+            margin: 20px auto 10px;
+            padding: 0 20px;
+        }
+        .search-box {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            font-size: 16px;
+            outline: none;
+            transition: box-shadow 0.3s;
+        }
+        .search-box:focus { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        /* 部门筛选区 */
+        .filter-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px 20px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .filter-btn {
+            background: white;
+            border: 1px solid #e1e4e8;
+            padding: 8px 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #555;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-btn:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .filter-btn.active { 
+            background: var(--accent); 
+            color: white; 
+            border-color: var(--accent); 
+            font-weight: 500;
+        }
+        .badge {
+            background: #eee;
+            color: #666;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .filter-btn.active .badge { background: rgba(255,255,255,0.3); color: white; }
+
+        /* 内容展示区 */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
         
-        /* Controls */
-        .controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .btn { padding: 8px 16px; border: 1px solid #ddd; background: white; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-size: 14px; }
-        .btn:hover { background: #eef; border-color: var(--primary); color: var(--primary); }
-        .btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .action-btn { background: #28a745; color: white; border: none; }
-        .action-btn:hover { background: #218838; }
+        /* 分组标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin: 30px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eaeaea;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-count { font-size: 14px; color: #888; font-weight: normal; }
+        
+        /* 颜色指示器 */
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .dot-central { background: var(--color-central); }
+        .dot-provincial { background: var(--color-provincial); }
+        .dot-municipal { background: var(--color-municipal); }
+        .dot-district { background: var(--color-district); }
 
-        /* Search */
-        .search-box { width: 100%; max-width: 400px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin: 0 auto 20px auto; display: block; }
+        /* 卡片网格 */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        
+        /* 卡片样式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        
+        /* 左侧彩色条 */
+        .card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0; width: 4px;
+        }
+        .card[data-level="中央级"]::before { background: var(--color-central); }
+        .card[data-level="省级"]::before { background: var(--color-provincial); }
+        .card[data-level="市级"]::before { background: var(--color-municipal); }
+        .card[data-level="区级"]::before { background: var(--color-district); }
+        
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 12px; color: #888; }
+        .level-tag { 
+            padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;
+        }
+        .card[data-level="中央级"] .level-tag { color: var(--color-central); background: #ffebee; }
+        .card[data-level="省级"] .level-tag { color: var(--color-provincial); background: #fff3e0; }
+        .card[data-level="市级"] .level-tag { color: var(--color-municipal); background: #e3f2fd; }
+        .card[data-level="区级"] .level-tag { color: var(--color-district); background: #e8f5e9; }
 
-        /* Stats */
-        .stats-bar { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9em; }
-
-        /* Grid */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s; border-left: 4px solid var(--primary); display: flex; flex-direction: column; }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .card-meta { font-size: 12px; color: #888; margin-bottom: 8px; display: flex; justify-content: space-between; }
-        .card-level { background: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 4px; }
-        .card-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #2c3e50; line-height: 1.4; }
-        .card-summary { font-size: 13px; color: #666; margin-bottom: 15px; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-        .tag { background: #f0f0f0; padding: 2px 8px; border-radius: 10px; font-size: 11px; color: #555; }
-        .card-link { margin-top: auto; text-decoration: none; color: var(--primary); font-size: 13px; font-weight: bold; display: block; text-align: right; }
-
-        /* Modal */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 500px; }
+        .card-title { font-size: 16px; font-weight: bold; color: #2c3e50; margin-bottom: 8px; line-height: 1.5; }
+        .card-meta { font-size: 12px; color: #999; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;}
+        .card-content { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 15px; flex-grow: 1; 
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .card-footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f5f5f5; padding-top: 10px; }
+        .dept-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+        .dept-tag { font-size: 11px; background: #f5f7fa; color: #555; padding: 2px 6px; border-radius: 4px; }
+        .link-btn { text-decoration: none; color: var(--accent); font-size: 13px; font-weight: bold; }
+        
+        /* 模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 500px; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        .modal-footer { text-align: right; margin-top: 20px; }
+        .form-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn { padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-cancel { background: #eee; color: #333; margin-right: 10px; }
+
+        .empty-state { text-align: center; padding: 40px; color: #999; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>2025年翠屏区重要报道统计</h1>
-    <div class="subtitle">区住建外宣统计 · 更新至12月</div>
-    <div style="position: absolute; right: 0; top: 0;">
-        <button class="btn action-btn" onclick="openModal()">+ 新增报道</button>
-        <button class="btn" onclick="exportCSV()">⬇ 导出数据</button>
+    <div class="header-title">
+        <h1>2025年翠屏区住建外宣统计</h1>
+        <p>更新至12月8日 · 部门分类看板</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn" onclick="openModal()"><i class="fas fa-plus"></i> 新增报道</button>
+        <button class="btn" onclick="exportCSV()"><i class="fas fa-file-download"></i> 导出数据</button>
     </div>
 </header>
 
-<input type="text" id="searchInput" class="search-box" placeholder="搜索标题、内容或媒体..." onkeyup="filterData()">
+<div class="search-container">
+    <input type="text" id="searchInput" class="search-box" placeholder="🔍 搜索标题、内容、媒体或部门..." onkeyup="handleSearch()">
+</div>
 
-<div class="controls" id="deptFilters">
-    <button class="btn active" onclick="filterDept('all')">全部</button>
+<div class="filter-container" id="deptFilters">
     </div>
 
-<div class="stats-bar" id="statsBar">共加载 0 条报道</div>
-
-<div class="grid" id="contentGrid">
+<div class="container" id="mainContent">
     </div>
 
 <div id="addModal" class="modal">
     <div class="modal-content">
-        <h2>新增报道</h2>
+        <h2 style="margin-top:0">新增报道记录</h2>
         <form id="addForm">
             <div class="form-group">
                 <label>标题</label>
-                <input type="text" name="title" required>
+                <input type="text" name="title" class="form-input" required>
             </div>
             <div class="form-group">
-                <label>部门 (多个用、分隔)</label>
-                <input type="text" name="dept" placeholder="例如：办公室、区质安站" required>
+                <label>部门 (多个用、或逗号分隔)</label>
+                <input type="text" name="dept" class="form-input" placeholder="例如：办公室、区质安站" required>
             </div>
             <div class="form-group">
-                <label>媒体名称</label>
-                <input type="text" name="media" required>
-            </div>
-            <div class="form-group">
-                <label>级别</label>
-                <select name="level">
-                    <option value="区级">区级</option>
-                    <option value="市级">市级</option>
-                    <option value="省级">省级</option>
-                    <option value="中央级">中央级</option>
-                </select>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div>
+                        <label>媒体名称</label>
+                        <input type="text" name="media" class="form-input" required>
+                    </div>
+                    <div>
+                        <label>级别</label>
+                        <select name="level" class="form-input">
+                            <option value="区级">区级</option>
+                            <option value="市级">市级</option>
+                            <option value="省级">省级</option>
+                            <option value="中央级">中央级</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label>日期</label>
-                <input type="text" name="date" placeholder="例如：12月5日">
+                <input type="text" name="date" class="form-input" placeholder="例如：12月5日">
             </div>
             <div class="form-group">
                 <label>链接</label>
-                <input type="text" name="link">
+                <input type="text" name="link" class="form-input">
             </div>
             <div class="form-group">
-                <label>主要内容摘要</label>
-                <textarea name="content" rows="3"></textarea>
+                <label>摘要</label>
+                <textarea name="content" class="form-input" rows="3"></textarea>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn" onclick="closeModal()">取消</button>
-                <button type="button" class="btn action-btn" onclick="addEntry()">保存</button>
+            <div style="text-align: right; margin-top:20px;">
+                <button type="button" class="btn btn-cancel" onclick="closeModal()">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addEntry()">保存记录</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    // 原始CSV数据 (已内置)
-    const rawCsvData = `序号,平台级别,媒体名称,主题,标题,链接,时长/篇幅,主要内容,日期,单条/综合,股室/单位
+    // 完整CSV数据
+const rawCsvData = `序号,平台级别,媒体名称,主题,标题,链接,时长/篇幅,主要内容,日期,单条/综合,股室/单位
 1,区级,三江翠屏APP,,区供排水服务中心学习贯彻区委六届七次全会精神,http://cuiping.wengegroup.com:9080/a/202501/02/WS6775f1d0e4b00b4bca74e92e.html,短篇,近期，区供排水服务中心召开中心第十二次党政联席会议，学习贯彻区委六届七次全会精神。,1月2日,综合,区供排水服务中心
 2,区级,三江翠屏APP,,区供排水服务中心学习贯彻市委六届九次全会精神,http://cuiping.wengegroup.com:9080/a/202501/02/WS6775f1f2e4b00b4bca74e92f.html,短篇,近期，区供排水服务中心召开中心第十一次党政联席会议，学习贯彻市委六届九次全会精神。,1月2日,综合,区供排水服务中心
 3,区级,三江翠屏APP,,规范直管公房管理、整顿租赁乱象,http://cuiping.wengegroup.com:9080/a/202501/13/WS67849749e4b00b4bca74f61a.html,短篇,翠屏区公房服务中心为加强直管公房管理，对所管辖区直管公房进行清理。,1月13日,综合,区公房服务中心
@@ -222,22 +366,17 @@
 103,区级,三江翠屏微信公众号,,老旧小区焕新 火车公园即将上线......,https://mp.weixin.qq.com/s/plIHb0xt8YD7ywZ1q26jag,,老旧小区改造。,12月4日,,发策股`;
 
     let allData = [];
-    let deptCounts = {};
+    let activeDept = '全部';
+    const levelOrder = ['中央级', '省级', '市级', '区级', '其他'];
 
-    // 解析CSV
+    // 数据解析
     function parseCSV(csv) {
         const lines = csv.trim().split('\n');
-        const headers = lines[0].split(',');
         const result = [];
-        
         for (let i = 1; i < lines.length; i++) {
-            // 简单处理CSV，注意：这里假设没有包含逗号的字段，实际使用可能需要更复杂的解析
-            // 针对提供的数据，主要字段没有英文逗号，可以用逗号分割
             let rowStr = lines[i];
-            // 修复可能存在的空行
             if(!rowStr) continue;
-
-            // 正则处理带引号的CSV字段（防止标题里有逗号被误切）
+            
             const row = [];
             let inQuote = false;
             let temp = '';
@@ -247,17 +386,15 @@
                 else { temp += char; }
             }
             row.push(temp);
+            
+            if (row.length < 5) continue;
 
-            if (row.length < 5) continue; // 忽略无效行
-
-            // 映射字段 (根据CSV结构: 序号,平台,媒体,主题,标题,链接,时长,内容,日期,综合,股室)
-            // 索引: 0=id, 1=level, 2=media, 3=theme, 4=title, 5=link, 6=len, 7=content, 8=date, 9=type, 10=dept
             const deptRaw = row[10] || "其他";
-            const depts = deptRaw.split(/、|，|,|\s+/).filter(d => d && d.trim() !== ''); // 按顿号、逗号或空格分割部门
+            const depts = deptRaw.split(/、|，|,|\s+/).filter(d => d && d.trim() !== '');
 
             const entry = {
                 id: row[0],
-                level: row[1],
+                level: (row[1] || '其他').trim(),
                 media: row[2],
                 title: row[4],
                 link: row[5],
@@ -273,113 +410,150 @@
     // 初始化
     function init() {
         allData = parseCSV(rawCsvData);
-        generateDepts();
-        renderGrid(allData);
-        updateStats(allData.length);
+        renderFilters();
+        filterByDept('全部');
     }
 
-    // 生成部门过滤器
-    function generateDepts() {
-        const depts = new Set();
+    // 渲染部门筛选器
+    function renderFilters() {
+        const deptCounts = {};
         allData.forEach(item => {
-            item.depts.forEach(d => depts.add(d.trim()));
+            item.depts.forEach(d => {
+                deptCounts[d] = (deptCounts[d] || 0) + 1;
+            });
         });
-        
+
         const container = document.getElementById('deptFilters');
-        Array.from(depts).sort().forEach(dept => {
-            if(dept.length < 2) return; // 过滤异常短的
-            const btn = document.createElement('button');
-            btn.className = 'btn';
-            btn.innerText = dept;
-            btn.onclick = () => filterDept(dept, btn);
-            container.appendChild(btn);
-        });
-    }
-
-    // 渲染卡片
-    function renderGrid(data) {
-        const grid = document.getElementById('contentGrid');
-        grid.innerHTML = '';
+        let html = `<button class="filter-btn active" onclick="filterByDept('全部', this)">
+                        全部 <span class="badge">${allData.length}</span>
+                    </button>`;
         
-        data.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            
-            // 生成部门标签HTML
-            const tagsHtml = item.depts.map(d => `<span class="tag">${d}</span>`).join('');
-            
-            card.innerHTML = `
-                <div class="card-meta">
-                    <span class="card-level">${item.level || '未分类'}</span>
-                    <span>${item.date || ''}</span>
-                </div>
-                <div class="card-title">${item.title}</div>
-                <div class="card-tags">${tagsHtml}</div>
-                <div class="card-meta" style="margin-bottom:8px;">${item.media}</div>
-                <div class="card-summary">${item.content || '暂无摘要'}</div>
-                <a href="${item.link}" target="_blank" class="card-link">查看原文 →</a>
-            `;
-            grid.appendChild(card);
+        Object.keys(deptCounts).sort().forEach(dept => {
+            if(dept.length < 2) return;
+            html += `<button class="filter-btn" onclick="filterByDept('${dept}', this)">
+                        ${dept} <span class="badge">${deptCounts[dept]}</span>
+                     </button>`;
         });
+        container.innerHTML = html;
     }
 
-    // 筛选部门
-    function filterDept(dept, btnElement) {
-        // 样式切换
-        document.querySelectorAll('.controls .btn').forEach(b => b.classList.remove('active'));
-        if(btnElement) {
-            btnElement.classList.add('active');
-        } else {
-            document.querySelector('.controls .btn').classList.add('active'); // "全部"按钮
+    // 部门筛选逻辑
+    function filterByDept(dept, btn) {
+        activeDept = dept;
+        
+        // 更新按钮状态
+        if(btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
         }
 
-        // 数据筛选
-        if (dept === 'all') {
-            renderGrid(allData);
-            updateStats(allData.length);
-        } else {
-            const filtered = allData.filter(item => item.depts.includes(dept));
-            renderGrid(filtered);
-            updateStats(filtered.length);
-        }
+        // 筛选数据
+        let filtered = dept === '全部' ? allData : allData.filter(item => item.depts.includes(dept));
+        
+        // 渲染内容
+        renderContent(filtered, dept !== '全部');
     }
 
-    // 搜索功能
-    function filterData() {
+    // 搜索逻辑
+    function handleSearch() {
         const query = document.getElementById('searchInput').value.toLowerCase();
-        const activeDeptBtn = document.querySelector('.controls .btn.active');
-        const activeDept = activeDeptBtn ? activeDeptBtn.innerText : '全部';
-
-        let baseData = allData;
-        if (activeDept !== '全部') {
-            baseData = allData.filter(item => item.depts.includes(activeDept));
-        }
-
+        let baseData = activeDept === '全部' ? allData : allData.filter(item => item.depts.includes(activeDept));
+        
         const filtered = baseData.filter(item => 
             (item.title && item.title.toLowerCase().includes(query)) ||
             (item.content && item.content.toLowerCase().includes(query)) ||
-            (item.media && item.media.toLowerCase().includes(query))
+            (item.media && item.media.toLowerCase().includes(query)) ||
+            (item.depts.join(',').toLowerCase().includes(query))
         );
-        renderGrid(filtered);
-        updateStats(filtered.length);
+
+        renderContent(filtered, activeDept !== '全部');
     }
 
-    function updateStats(count) {
-        document.getElementById('statsBar').innerText = `共找到 ${count} 条相关报道`;
+    // 核心渲染逻辑 (支持分组)
+    function renderContent(data, isGrouped) {
+        const container = document.getElementById('mainContent');
+        container.innerHTML = '';
+
+        if(data.length === 0) {
+            container.innerHTML = '<div class="empty-state">没有找到相关报道</div>';
+            return;
+        }
+
+        if (isGrouped) {
+            // 分组渲染逻辑 (按级别)
+            levelOrder.forEach(level => {
+                const levelData = data.filter(item => item.level.includes(level.replace('级',''))); // 模糊匹配 '中央' match '中央级'
+                // 精确匹配修复
+                const exactLevelData = data.filter(item => {
+                    if(level === '其他') return !['中央', '省', '市', '区'].some(k => (item.level||'').includes(k));
+                    return (item.level||'').includes(level.substring(0,2));
+                });
+
+                if (exactLevelData.length > 0) {
+                    // 渲染标题
+                    let colorClass = '';
+                    if(level === '中央级') colorClass = 'dot-central';
+                    else if(level === '省级') colorClass = 'dot-provincial';
+                    else if(level === '市级') colorClass = 'dot-municipal';
+                    else if(level === '区级') colorClass = 'dot-district';
+
+                    const section = document.createElement('div');
+                    section.innerHTML = `
+                        <div class="section-header">
+                            <div class="section-title">
+                                <span class="dot ${colorClass}"></span> ${level}
+                                <span class="section-count">(${exactLevelData.length}篇)</span>
+                            </div>
+                        </div>
+                        <div class="grid">${exactLevelData.map(item => createCardHTML(item)).join('')}</div>
+                    `;
+                    container.appendChild(section);
+                }
+            });
+        } else {
+            // 默认渲染 (全部视图，按日期排序)
+            // 简单的日期排序逻辑(仅作示例，因为日期格式中文较难解析，这里维持原序或反序)
+            const grid = document.createElement('div');
+            grid.className = 'grid';
+            grid.innerHTML = data.map(item => createCardHTML(item)).join('');
+            container.appendChild(grid);
+        }
     }
 
-    // 模态框逻辑
+    // 生成卡片HTML
+    function createCardHTML(item) {
+        const levelTag = item.level || '未分类';
+        const deptTags = item.depts.map(d => `<span class="dept-tag">${d}</span>`).join('');
+        
+        return `
+            <div class="card" data-level="${levelTag}">
+                <div class="card-header">
+                    <span class="level-tag">${levelTag}</span>
+                    <span>${item.date || ''}</span>
+                </div>
+                <div class="card-title">${item.title}</div>
+                <div class="card-meta">
+                    <i class="fas fa-newspaper"></i> ${item.media}
+                </div>
+                <div class="card-content">${item.content || '暂无摘要'}</div>
+                <div class="card-footer">
+                    <div class="dept-tags">${deptTags}</div>
+                    ${item.link ? `<a href="${item.link}" target="_blank" class="link-btn">查看原文 &rarr;</a>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // 模态框操作
     function openModal() { document.getElementById('addModal').style.display = 'flex'; }
     function closeModal() { document.getElementById('addModal').style.display = 'none'; }
-
-    // 新增数据
+    
+    // 新增记录
     function addEntry() {
         const form = document.getElementById('addForm');
         const formData = new FormData(form);
+        const depts = formData.get('dept').split(/、|，|,|\s+/).filter(d => d.trim());
         
-        const deptsStr = formData.get('dept');
-        const depts = deptsStr.split(/、|，|,|\s+/).filter(d => d.trim());
-
         const newEntry = {
             id: allData.length + 1,
             title: formData.get('title'),
@@ -391,47 +565,33 @@
             depts: depts
         };
 
-        allData.unshift(newEntry); // 加到最前面
-        
-        // 刷新界面
-        renderGrid(allData);
-        updateStats(allData.length);
+        allData.unshift(newEntry);
+        renderFilters(); // 更新统计数字
+        filterByDept(activeDept); // 刷新当前视图
         closeModal();
         form.reset();
-        
-        alert("添加成功！请注意：刷新网页后新增数据会消失，请及时点击右上角‘导出数据’保存CSV文件。");
+        alert('添加成功！请记得点击右上角“导出数据”保存。');
     }
 
     // 导出CSV
     function exportCSV() {
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for Excel
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
         csvContent += "序号,平台级别,媒体名称,主题,标题,链接,时长/篇幅,主要内容,日期,单条/综合,股室/单位\n";
 
         allData.forEach(row => {
             const depts = row.depts.join('、');
-            // 处理含逗号的字段，用引号包起来
             const safe = (txt) => `"${(txt || '').toString().replace(/"/g, '""')}"`;
             
             const line = [
-                row.id,
-                safe(row.level),
-                safe(row.media),
-                "", // Theme留空
-                safe(row.title),
-                safe(row.link),
-                "短篇", // 默认
-                safe(row.content),
-                safe(row.date),
-                "综合",
-                safe(depts)
+                row.id, safe(row.level), safe(row.media), "", safe(row.title),
+                safe(row.link), "短篇", safe(row.content), safe(row.date), "综合", safe(depts)
             ].join(",");
             csvContent += line + "\n";
         });
 
-        const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "最新_翠屏区住建外宣统计.csv");
+        link.href = encodeURI(csvContent);
+        link.download = `翠屏区住建外宣统计_${new Date().toLocaleDateString()}.csv`;
         document.body.appendChild(link);
         link.click();
     }
